@@ -43,6 +43,27 @@ const PlayWithBot = ({ socket }) => {
 
     React.useEffect(() => {
         socket.on('connect', () => {
+            socket.on('bot:move:success', (botMoved) => {
+                console.log('botmoved', botMoved);
+                setBotTiles(botMoved?.botPlayer);
+                setPlayerTiles(botMoved?.realPlayer);
+                setPossibleMove([])
+                setPlayerTargeted(null)
+                if (botMoved?.killed) {
+                    document.getElementById(botMoved.killed).innerHTML = ''
+                }
+            })
+
+            socket.on('bot:move:fail', (botMoveFail) => {
+                console.log('botmoved failed', botMoveFail);
+                console.log(botMoveFail);
+            })
+
+            socket.on('player:turn', (game) => {
+                console.log('turn', game);
+            })
+
+
             socket.on('player:move:success', (playerMoved) => {
                 console.log(playerMoved)
                 setPlayerTiles(playerMoved?.realPlayer);

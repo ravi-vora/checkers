@@ -38,9 +38,20 @@ export const createGameWithBot = (io, socket, payload) => {
                      * get already running game
                      */
                     redisClient.get(player[0]?.['game']?.[0]?._id.toString()).then((game) => {
-                        socket.emit('game:create-bot:success', {
-                            ...JSON.parse(game),
-                            gameId: player[0]?.['game']?.[0]?._id.toString()
+                        redisClient.set(`turn-${player[0]?.['game']?.[0]?._id.toString()}`, 1).then(() => {
+                            socket.emit('game:create-bot:success', {
+                                ...JSON.parse(game),
+                                gameId: player[0]?.['game']?.[0]?._id.toString()
+                            });
+                            socket.emit('player:turn', {
+                                ...JSON.parse(game),
+                                gameId: player[0]?.['game']?.[0]?._id.toString()
+                            });
+                        }).catch((e) => {
+                            socket.emit('game:create-bot:fail', {
+                                general: [`failed updation on redis : ${e.message}`],
+                                code: 'REDIS_FAIL'
+                            });
                         });
                     }).catch((e) => {
                         socket.emit('game:create-bot:fail', {
@@ -95,11 +106,21 @@ export const createGameWithBot = (io, socket, payload) => {
                                         realPlayer: newGameBoard.player1,
                                         botPlayer: newGameBoard.player2
                                     })).then(() => {
-                                        socket.emit('game:create-bot:success', {
-                                            gameId: newGame.id,
-                                            board: newGameBoard.board,
-                                            realPlayer: newGameBoard.player1,
-                                            botPlayer: newGameBoard.player2
+                                        /**
+                                         * update real player turn on redis server
+                                         */
+                                        redisClient.set(`turn-${newGame.id.toString()}`, 1).then(() => {
+                                            socket.emit('game:create-bot:success', {
+                                                gameId: newGame.id,
+                                                board: newGameBoard.board,
+                                                realPlayer: newGameBoard.player1,
+                                                botPlayer: newGameBoard.player2
+                                            });
+                                        }).catch((e) => {
+                                            socket.emit('game:create-bot:fail', {
+                                                general: [`failed updation on redis : ${e.message}`],
+                                                code: 'REDIS_FAIL'
+                                            });
                                         });
                                     }).catch((e) => {
                                         socket.emit('game:create-bot:fail', {

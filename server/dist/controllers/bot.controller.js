@@ -1,41 +1,40 @@
-import { FoundPossibleMove } from "../config/game.config.js";
-import { checkJump, checkSaftyBeforeMove, findAnyPossibleMoves, findCross, findKillMoves, findPossibleMoves, randomIntFromInterval } from "../helpers/game.helper.js";
+import { checkJump, checkSaftyBeforeMove, findAnyPossibleMoves, findKillMoves, randomIntFromInterval } from "../helpers/game.helper.js";
 import { Game } from "../models/game.model.js";
 import { Player } from "../models/player.model.js";
 import { redisClient } from "../services/redis.service.js";
-
 export const playBot1 = (gameId, game, io, socket) => {
     redisClient.get(`turn-${gameId}`).then(turn => {
-        if(turn !== '0') {
+        if (turn !== '0') {
             socket.emit('bot:move:fail', {
                 general: ['bot cant move']
-            })
-        } else {
-            var choosedFinalMove: FoundPossibleMove = {
+            });
+        }
+        else {
+            var choosedFinalMove = {
                 from: null,
                 to: [],
                 kill: []
-            }
-            var choosedMove: FoundPossibleMove = {
+            };
+            var choosedMove = {
                 from: null,
                 to: [],
                 kill: []
-            }
+            };
             var allPossiblekillMoves = [];
-        
             /**
              * find all kill moves if there is any then checking -> is it safe or not
              */
             Object.keys(game.botPlayer).every((position) => {
-                let killMoves = []
+                let killMoves = [];
                 if (game.botPlayer[position] === 'normal') {
                     killMoves = findKillMoves(position, game, 1, true, true);
-                } else if (game.botPlayer[position] === 'king') {
+                }
+                else if (game.botPlayer[position] === 'king') {
                     killMoves = findKillMoves(position, game, 2, true, true);
-                } else {
+                }
+                else {
                     throw new Error("invalid position found in logic");
                 }
-        
                 if (killMoves.length > 0) {
                     console.log('found kill moves: ', killMoves);
                     allPossiblekillMoves.push(...killMoves);
@@ -43,209 +42,188 @@ export const playBot1 = (gameId, game, io, socket) => {
                         var isPossitionSafe = false;
                         try {
                             isPossitionSafe = checkSaftyBeforeMove(position, killMove, game, game.botPlayer[position]);
-                        } catch(e) {
-                            console.log('something went wrong.')
                         }
-                        
+                        catch (e) {
+                            console.log('something went wrong.');
+                        }
                         console.log('safty of kill move : ', isPossitionSafe);
                         if (isPossitionSafe) {
                             choosedMove.from = position,
-                            choosedMove.to = [killMove];
+                                choosedMove.to = [killMove];
                             var isJump = null;
                             try {
                                 isJump = checkJump(position, killMove, 2);
-                            } catch (e) {
-                                console.log('failed jump check')
                             }
-                            if ( isJump.jump ) {
+                            catch (e) {
+                                console.log('failed jump check');
+                            }
+                            if (isJump.jump) {
                                 choosedMove.kill.push(...isJump.killed);
                             }
                             return false;
-                        } else {
+                        }
+                        else {
                             return true;
                         }
-                    })
+                    });
                 }
-        
-                if (choosedMove.from && choosedMove.to) return false;
-                else return true;
-            })
-            
-            console.log('choosed move : ', choosedMove)
-
+                if (choosedMove.from && choosedMove.to)
+                    return false;
+                else
+                    return true;
+            });
+            console.log('choosed move : ', choosedMove);
             /**
              * if move is not safe we find normal random move
              */
-            if ( allPossiblekillMoves.length < 1 && !choosedMove.from && choosedMove.to.length < 1 ) {
+            if (allPossiblekillMoves.length < 1 && !choosedMove.from && choosedMove.to.length < 1) {
                 console.log('looking for any possible move');
                 var anyPossibleMoves = [];
-        
                 /**
                  * collect all possible
                  */
-                Object.keys(game.botPlayer).every((position) => { 
-                    const possibleMove = findAnyPossibleMoves(
-                        position, 
-                        game, 
-                        game.botPlayer[position] === 'normal' ? 1 : 2,
-                        true
-                    )
+                Object.keys(game.botPlayer).every((position) => {
+                    const possibleMove = findAnyPossibleMoves(position, game, game.botPlayer[position] === 'normal' ? 1 : 2, true);
                     console.log('possible', possibleMove);
-        
                     if (possibleMove.length > 0) {
                         anyPossibleMoves.push({
                             from: position,
                             to: possibleMove
-                        })
+                        });
                     }
                     return true;
                 });
-        
                 /**
                  * choose any random move
                  */
                 const randomNumber = randomIntFromInterval(0, anyPossibleMoves.length - 1);
                 choosedFinalMove.from = anyPossibleMoves[randomNumber].from;
                 choosedFinalMove.to = [...anyPossibleMoves[randomNumber].to];
-
-                console.log('choosedFinalMove 1', choosedFinalMove)
-            } else {
+                console.log('choosedFinalMove 1', choosedFinalMove);
+            }
+            else {
                 console.log('kill selected : ', choosedMove);
                 choosedFinalMove = choosedMove;
             }
-        
-            if ( !choosedFinalMove.from && choosedFinalMove.to.length < 1 ) {
+            if (!choosedFinalMove.from && choosedFinalMove.to.length < 1) {
                 throw new Error("bot didnt find any possible move, logic is not right!");
-            } else {
+            }
+            else {
                 console.log('choosedFinalMove 2', choosedFinalMove);
                 var updateGame = game;
-        
                 const randomNumber = randomIntFromInterval(0, choosedFinalMove.to.length - 1);
                 console.log('to : ', choosedFinalMove.to);
                 console.log('random number', randomNumber);
                 let to = choosedFinalMove.to[randomNumber];
-                
                 if (to[1] === '1' && updateGame.botPlayer[choosedFinalMove.from] !== 'king') {
                     updateGame.botPlayer[to] = 'king';
-                } else {
+                }
+                else {
                     updateGame.botPlayer[to] = updateGame.botPlayer[choosedFinalMove.from];
                 }
-
-                if ( choosedFinalMove.kill.length > 0 ) {
-                    console.log('killing of realPlayer')
+                if (choosedFinalMove.kill.length > 0) {
+                    console.log('killing of realPlayer');
                     choosedFinalMove.kill.forEach(killed => {
                         delete updateGame.realPlayer[killed];
-                    })
+                    });
                 }
-        
                 delete updateGame.botPlayer[choosedFinalMove.from];
-        
-                redisClient.set(gameId, JSON.stringify(updateGame)).then(() : void => {
+                redisClient.set(gameId, JSON.stringify(updateGame)).then(() => {
                     Game.findById(gameId).populate(['player1', 'player2']).then(gameDoc => {
-                        console.log('game expiration : ', new Date(gameDoc?.expiresAt) > new Date())
-                        console.log('game expiration status : ', new Date(gameDoc?.expiresAt), new Date())
-                        if ( gameDoc && new Date(gameDoc?.expiresAt) > new Date() ) {
-                            console.log('game is not over yet...')
+                        console.log('game expiration : ', new Date(gameDoc?.expiresAt) > new Date());
+                        console.log('game expiration status : ', new Date(gameDoc?.expiresAt), new Date());
+                        if (gameDoc && new Date(gameDoc?.expiresAt) > new Date()) {
+                            console.log('game is not over yet...');
                             /**
                              * update real player positions
                              */
                             var update = {
                                 $set: {}
-                            }
+                            };
                             if (gameDoc.player1.realOrNot) {
                                 update.$set['normal_positions'] = Object.keys(updateGame.realPlayer).filter(position => updateGame.realPlayer[position] === 'normal');
                                 update.$set['king_positions'] = Object.keys(updateGame.realPlayer).filter(position => updateGame.realPlayer[position] === 'king');
-                                update.$set['lose'] = [...choosedFinalMove.kill, ...(gameDoc.player1.realOrNot ? gameDoc.player1.lose : gameDoc.player2.lose)]
-                            } else {
-                                update.$set['normal_positions'] = Object.keys(updateGame.botPlayer).filter(position => updateGame.botPlayer[position] === 'normal')
-                                update.$set['king_positions'] = Object.keys(updateGame.botPlayer).filter(position => updateGame.botPlayer[position] === 'king');
-                                update.$set['killed'] = [...choosedFinalMove.kill, ...(gameDoc.player1.realOrNot ? gameDoc.player2.killed : gameDoc.player1.killed)]
+                                update.$set['lose'] = [...choosedFinalMove.kill, ...(gameDoc.player1.realOrNot ? gameDoc.player1.lose : gameDoc.player2.lose)];
                             }
-
+                            else {
+                                update.$set['normal_positions'] = Object.keys(updateGame.botPlayer).filter(position => updateGame.botPlayer[position] === 'normal');
+                                update.$set['king_positions'] = Object.keys(updateGame.botPlayer).filter(position => updateGame.botPlayer[position] === 'king');
+                                update.$set['killed'] = [...choosedFinalMove.kill, ...(gameDoc.player1.realOrNot ? gameDoc.player2.killed : gameDoc.player1.killed)];
+                            }
                             Player.findByIdAndUpdate(gameDoc.player1.realOrNot ? gameDoc.player1.id : gameDoc.player2.id, {
                                 ...update
                             }, { new: true }).then((player1) => {
-        
                                 /**
                                  * update bot player positions
                                  */
-
                                 Player.findByIdAndUpdate(gameDoc.player1.realOrNot ? gameDoc.player2.id : gameDoc.player1.id, {
                                     ...update
                                 }, { new: true }).then((player2) => {
-        
                                     /**
                                      * update game on redis server
                                      */
                                     redisClient.set(gameId, JSON.stringify(updateGame)).then(() => {
                                         var response = {
-                                            from : choosedFinalMove.from,
+                                            from: choosedFinalMove.from,
                                             to: to,
                                             realPlayer: updateGame.realPlayer,
-                                            botPlayer: updateGame.botPlayer 
-                                        }
-        
+                                            botPlayer: updateGame.botPlayer
+                                        };
                                         if (choosedFinalMove.kill.length > 0) {
                                             response['kill'] = choosedFinalMove.kill;
                                         }
-
                                         redisClient.set(`turn-${gameId}`, 1).then((result) => {
                                             console.log('player turn updated : ', result);
-                                            socket.emit('bot:move:success', response)
+                                            socket.emit('bot:move:success', response);
                                             socket.emit('player:turn', {
                                                 gameId: gameId,
                                                 game: updateGame
-                                            })
-
-                                        }).catch((e: Error) => {
+                                            });
+                                        }).catch((e) => {
                                             socket.emit('bot:move:fail', {
                                                 general: [`failed updating player turn : ${e.message}`]
-                                            })
-                                        })
-
-                                    }).catch((e: Error) => {
+                                            });
+                                        });
+                                    }).catch((e) => {
                                         socket.emit('bot:move:fail', {
                                             general: [`updation on redis server ${e.message}`]
-                                        })
-                                    })
-        
-                                }).catch((e: Error) => {
+                                        });
+                                    });
+                                }).catch((e) => {
                                     socket.emit('bot:move:fail', {
                                         general: [e.message]
-                                    })
-                                })
-        
-                            }).catch((e: Error) : void => {
+                                    });
+                                });
+                            }).catch((e) => {
                                 socket.emit('bot:move:fail', {
                                     general: [e.message]
-                                })
-                            })
-        
-                        } else {
+                                });
+                            });
+                        }
+                        else {
                             socket.emit('bot:move:fail', {
                                 general: ["game has been expired."],
                                 code: "GAME_EXPIRED"
-                            })    
+                            });
                         }
-                    }).catch((e: Error) => {
+                    }).catch((e) => {
                         socket.emit('bot:move:fail', {
                             general: ["Game not found."],
                             code: "GAME_EXPIRED"
-                        })
-                    })
-                }).catch((e) : void => {
+                        });
+                    });
+                }).catch((e) => {
                     socket.emit('bot:move:fail', {
                         general: ["failed updating game."],
                         code: "GAME_EXPIRED"
-                    })
-                })
+                    });
+                });
             }
         }
-    }).catch((e: Error) : void => {
+    }).catch((e) => {
         socket.emit('bot:move:fail', {
             general: [`failed getting player turn : ${e.message}`]
-        })
-    })
-}
-
-
+        });
+    });
+};
+//# sourceMappingURL=bot.controller.js.map

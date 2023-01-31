@@ -6,6 +6,7 @@ export const directionConfig = {
     leftBack: { forwardOrBack: true, leftOrRight: false }
 };
 export const validatePosition = (position) => {
+    console.log('validation on position : ', position);
     try {
         const firstLetter = position[0];
         const secondLetter = position[1];
@@ -144,7 +145,7 @@ export const findPossibleMoves = (position, game, maximum, realOrBot) => {
         throw new Error("invalid player position");
     }
 };
-export const findKillMoves = (position, game, position_type, forwardOrBack) => {
+export const findKillMoves = (position, game, position_type, forwardOrBack, realOrBot = false) => {
     var available = [];
     if (position_type === 1) {
         if (!forwardOrBack) {
@@ -152,13 +153,25 @@ export const findKillMoves = (position, game, position_type, forwardOrBack) => {
             const leftCrossSecond = findCross({ position: position, forwardOrBack: false, leftOrRight: false, steps: 2 });
             if (rightCrossSecond && !game.realPlayer[rightCrossSecond] && !game.botPlayer[rightCrossSecond]) {
                 const rightCross = findCross({ position: position, forwardOrBack: false, leftOrRight: true, steps: 1 });
-                if (rightCross && game.botPlayer[rightCross])
-                    available.push(rightCrossSecond);
+                if (!realOrBot) {
+                    if (rightCross && game.botPlayer[rightCross])
+                        available.push(rightCrossSecond);
+                }
+                else {
+                    if (rightCross && game.realPlayer[rightCross])
+                        available.push(rightCrossSecond);
+                }
             }
             if (leftCrossSecond && !game.realPlayer[leftCrossSecond] && !game.botPlayer[leftCrossSecond]) {
                 const leftCross = findCross({ position: position, forwardOrBack: false, leftOrRight: false, steps: 1 });
-                if (leftCross && game.botPlayer[leftCross])
-                    available.push(leftCrossSecond);
+                if (!realOrBot) {
+                    if (leftCross && game.botPlayer[leftCross])
+                        available.push(leftCrossSecond);
+                }
+                else {
+                    if (leftCross && game.realPlayer[leftCross])
+                        available.push(leftCrossSecond);
+                }
             }
         }
         else {
@@ -166,13 +179,25 @@ export const findKillMoves = (position, game, position_type, forwardOrBack) => {
             const leftCrossSecond = findCross({ position: position, forwardOrBack: true, leftOrRight: false, steps: 2 });
             if (rightCrossSecond && !game.realPlayer[rightCrossSecond] && !game.botPlayer[rightCrossSecond]) {
                 const rightCross = findCross({ position: position, forwardOrBack: true, leftOrRight: true, steps: 1 });
-                if (rightCross && game.botPlayer[rightCross])
-                    available.push(rightCrossSecond);
+                if (!realOrBot) {
+                    if (rightCross && game.botPlayer[rightCross])
+                        available.push(rightCrossSecond);
+                }
+                else {
+                    if (rightCross && game.realPlayer[rightCross])
+                        available.push(rightCrossSecond);
+                }
             }
             if (leftCrossSecond && !game.realPlayer[leftCrossSecond] && !game.botPlayer[leftCrossSecond]) {
                 const leftCross = findCross({ position: position, forwardOrBack: true, leftOrRight: false, steps: 1 });
-                if (leftCross && game.botPlayer[leftCross])
-                    available.push(leftCrossSecond);
+                if (!realOrBot) {
+                    if (leftCross && game.botPlayer[leftCross])
+                        available.push(leftCrossSecond);
+                }
+                else {
+                    if (leftCross && game.realPlayer[leftCross])
+                        available.push(leftCrossSecond);
+                }
             }
         }
     }
@@ -183,23 +208,47 @@ export const findKillMoves = (position, game, position_type, forwardOrBack) => {
         const rightBackCrossSecond = findCross({ position: position, forwardOrBack: true, leftOrRight: true, steps: 2 });
         if (rightForwardCrossSecond && !game.realPlayer[rightForwardCrossSecond] && !game.botPlayer[rightForwardCrossSecond]) {
             const rightForwardCross = findCross({ position: position, forwardOrBack: false, leftOrRight: true, steps: 1 });
-            if (rightForwardCross && game.botPlayer[rightForwardCross])
-                available.push(rightForwardCrossSecond);
+            if (!realOrBot) {
+                if (rightForwardCross && game.botPlayer[rightForwardCross])
+                    available.push(rightForwardCrossSecond);
+            }
+            else {
+                if (rightForwardCross && game.realPlayer[rightForwardCross])
+                    available.push(rightForwardCrossSecond);
+            }
         }
         if (leftForwardCrossSecond && !game.realPlayer[leftForwardCrossSecond] && !game.botPlayer[leftForwardCrossSecond]) {
             const leftForwardCross = findCross({ position: position, forwardOrBack: false, leftOrRight: false, steps: 1 });
-            if (leftForwardCross && game.botPlayer[leftForwardCross])
-                available.push(leftForwardCrossSecond);
+            if (!realOrBot) {
+                if (leftForwardCross && game.botPlayer[leftForwardCross])
+                    available.push(leftForwardCrossSecond);
+            }
+            else {
+                if (leftForwardCross && game.realPlayer[leftForwardCross])
+                    available.push(leftForwardCrossSecond);
+            }
         }
         if (leftBackCrossSecond && !game.realPlayer[leftBackCrossSecond] && !game.botPlayer[leftBackCrossSecond]) {
             const leftBackCross = findCross({ position: position, forwardOrBack: true, leftOrRight: false, steps: 1 });
-            if (leftBackCross && game.botPlayer[leftBackCross])
-                available.push(leftBackCrossSecond);
+            if (!realOrBot) {
+                if (leftBackCross && game.botPlayer[leftBackCross])
+                    available.push(leftBackCrossSecond);
+            }
+            else {
+                if (leftBackCross && game.realPlayer[leftBackCross])
+                    available.push(leftBackCrossSecond);
+            }
         }
         if (rightBackCrossSecond && !game.realPlayer[rightBackCrossSecond] && !game.botPlayer[rightBackCrossSecond]) {
             const rightBackCross = findCross({ position: position, forwardOrBack: true, leftOrRight: true, steps: 1 });
-            if (rightBackCross && game.botPlayer[rightBackCross])
-                available.push(rightBackCrossSecond);
+            if (!realOrBot) {
+                if (rightBackCross && game.botPlayer[rightBackCross])
+                    available.push(rightBackCrossSecond);
+            }
+            else {
+                if (rightBackCross && game.realPlayer[rightBackCross])
+                    available.push(rightBackCrossSecond);
+            }
         }
     }
     else {
@@ -254,18 +303,33 @@ export const findAnyPossibleMoves = (position, game, position_type, forwardOrBac
     }
     return available;
 };
-export const checkJump = (from, to, numberOfPaths) => {
+/**
+ * FIXME: [BIG]
+ */
+export const checkJump = (from, to, numberOfPaths = 2) => {
+    var frontLeft = findCross({ position: from, forwardOrBack: false, leftOrRight: false, steps: 1 });
+    var frontRight = findCross({ position: from, forwardOrBack: false, leftOrRight: true, steps: 1 });
+    var backLeft = findCross({ position: from, forwardOrBack: true, leftOrRight: false, steps: 1 });
+    var backRight = findCross({ position: from, forwardOrBack: true, leftOrRight: true, steps: 1 });
+    if (frontLeft === to ||
+        frontRight === to ||
+        backLeft === to ||
+        backRight === to) {
+        return { jump: false };
+    }
     var killed = [];
+    var kill = null;
     Object.keys(directionConfig).every((direction, d_index) => {
-        if (d_index < numberOfPaths)
+        if (d_index > numberOfPaths)
             return false;
         let check = numberOfPaths;
-        while (check) {
+        while (check && from) {
             --check;
             const makeJump = findCross({ ...directionConfig[direction], step: 2, position: from });
             if (makeJump === to) {
-                const kill = findCross({ ...directionConfig[direction], step: 1, position: from });
-                killed.push(kill);
+                kill = findCross({ ...directionConfig[direction], step: 1, position: from });
+                if (kill)
+                    killed.push(kill);
             }
             from = makeJump;
         }
@@ -275,5 +339,49 @@ export const checkJump = (from, to, numberOfPaths) => {
         return { jump: true, killed: killed };
     else
         return { jump: false };
+};
+export const checkSaftyBeforeMove = (currentPosition, movePosition, game, position_type = 1) => {
+    const frontLeft = findCross({ position: movePosition, forwardOrBack: true, leftOrRight: true, steps: 1 });
+    const backRight = findCross({ position: movePosition, forwardOrBack: false, leftOrRight: false, steps: 1 });
+    const frontRight = findCross({ position: movePosition, forwardOrBack: true, leftOrRight: false, steps: 1 });
+    const backLeft = findCross({ position: movePosition, forwardOrBack: false, leftOrRight: true, steps: 1 });
+    if (position_type === 1) {
+        if (frontLeft && game.realPlayer[frontLeft]) {
+            if (backRight && backRight === currentPosition) {
+                return false;
+            }
+            else if (backRight && !game.botPlayer[backRight] && !game.reaPlayer[backRight]) {
+                return false;
+            }
+        }
+        else if (frontRight && game.realPlayer[frontRight]) {
+            if (backLeft && backLeft === currentPosition) {
+                return false;
+            }
+            else if (backLeft && !game.realPlayer[backLeft] && !game.botPlayer[backLeft]) {
+                return false;
+            }
+        }
+        else if (backLeft && game.realPlayer[backLeft]) {
+            if (frontRight && frontRight === currentPosition) {
+                return false;
+            }
+            else if (frontRight && !game.realPlayer[frontRight] && !game.botPlayer[frontRight]) {
+                return false;
+            }
+        }
+        else if (backRight && game.realPlayer[backRight]) {
+            if (frontLeft && frontLeft === currentPosition) {
+                return false;
+            }
+            else if (frontLeft && !game.realPlayer[frontLeft] && !game.botPlayer[frontLeft]) {
+                return false;
+            }
+        }
+    }
+    return true;
+};
+export const randomIntFromInterval = (min, max) => {
+    return Math.floor(Math.random() * (max - min + 1) + min);
 };
 //# sourceMappingURL=game.helper.js.map

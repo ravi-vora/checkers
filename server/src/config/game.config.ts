@@ -22,3 +22,9 @@ export enum PositionType {
     normal = 1,
     king = 2
 }
+
+export interface FoundPossibleMove {
+    from: null | string,
+    to: string[],
+    kill: string[]
+}
