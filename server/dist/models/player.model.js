@@ -28,6 +28,10 @@ const playerCollectionSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
         required: true
+    },
+    turn: {
+        type: Boolean,
+        required: false,
     }
 }, { timestamps: true });
 export const Player = mongoose.model('player', playerCollectionSchema);

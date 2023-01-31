@@ -32,7 +32,7 @@ const SigninComponent = ({socket}) => {
         setMessage(message);
     }
 
-    const submitSignup = (e) => {
+    const submitSignin = (e) => {
         e.preventDefault();
         if ( socket.connected ) {
             socket.on('user:login:success', (user) => {
@@ -41,6 +41,7 @@ const SigninComponent = ({socket}) => {
             })
     
             socket.on('user:login:fail', (failUser) => {
+                console.log(failUser)
                 if(failUser?.general) showMessage(failUser?.general[0]);
                 setErrors(failUser);
             })
@@ -61,7 +62,7 @@ const SigninComponent = ({socket}) => {
             <Typography variant='h4' textAlign="center" mb={3} fontWeight='300' sx={{ userSelect: 'none', textTransform: 'uppercase', fontWeight: '200', fontFamily: "'Poppins', sans-serif" }}>
                 Signin
             </Typography>
-            <form action="#" onSubmit={submitSignup}>
+            <form action="#" onSubmit={submitSignin}>
                 <Grid container direction="column" spacing={3}>
                     <Grid item>
                         <TextField 

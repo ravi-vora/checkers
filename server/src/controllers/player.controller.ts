@@ -74,7 +74,6 @@ export const getPlayerPosssibleMove = (io: Server, socket: Socket, payload) => {
     }
 }
 
-// FIXME: redisClient is not responding...
 export const movePlayerTile = (io: Server, socket: Socket, payload) => {
     const { from, to, token, gameId } = payload;
     const errors = {
@@ -110,8 +109,7 @@ export const movePlayerTile = (io: Server, socket: Socket, payload) => {
                 })
             } else {
                 console.log('getting game...', gameId)
-                redisClient.get(gameId, (game) : void => {
-                    console.log(game)
+                redisClient.get(gameId).then((game) : void => {
                     game = JSON.parse(game);
                     var updateGame = game;
 
@@ -129,15 +127,13 @@ export const movePlayerTile = (io: Server, socket: Socket, payload) => {
                         errors.from.length > 0 ||
                         errors.to.length > 0
                     ) {
-                        console.log('reached...2')
                         Object.keys(errors).forEach((key) => {
                             if ( errors[key].length < 1 ) delete errors[key]
                         })
                         socket.emit('player:move:fail', errors);
                     } else {
-                        console.log('reached...3')
-                        Game.findById(gameId).then(gameDoc => {
-                            
+                        Game.findById(gameId).populate(['player1', 'player2']).then(gameDoc => {
+                            console.log('gameDoc', gameDoc)
                             if (!gameDoc) {
                                 socket.emit('player:move:fail', {
                                     general: ["Game not found."],
@@ -148,53 +144,56 @@ export const movePlayerTile = (io: Server, socket: Socket, payload) => {
                                  * check if there is any killing in single move
                                  */
                                 const isJump = checkJump(from, to, 2);
-                                var update = {
-                                    $pull: {},
-                                    $push: {}
-                                }
+                                
 
                                 if ( to[1] === '8' && game.realPlayer[from] != 'king' ) {
-                                    update.$pull['normal_positions'] = from;
-                                    update.$push['king_positions'] = to;
 
                                     updateGame.realPlayer[to] = 'king';
                                     delete updateGame.realPlayer[from];
 
                                 } else if ( game.realPlayer[from] === 'king' ) {
-                                    update.$pull['king_positions'] = from;
-                                    update.$push['king_positions'] = to;
 
                                     updateGame.realPlayer[to] = 'king';
                                     delete updateGame.realPlayer[from];
                                 } else {
-                                    update.$pull['normal_positions'] = from;
-                                    update.$push['normal_positions'] = to;
 
                                     updateGame.realPlayer[to] = 'normal';
                                     delete updateGame.realPlayer[from];
                                 }
 
-                                if ( isJump.jump ) {
-                                    update.$push['killed'] = isJump.killed;
+                                var update = {
+                                    $set: { 
+                                        normal_positions: Object.keys(updateGame.realPlayer).filter(position => updateGame.realPlayer[position] === 'normal'),
+                                        king_positions: Object.keys(updateGame.realPlayer).filter(position => updateGame.realPlayer[position] === 'king'),
+                                    }
                                 }
 
-                                Player.findByIdAndUpdate(gameDoc.player1, { ...update }, { new: true })
+                                if ( isJump.jump ) {
+                                    update.$set['killed'] = [...gameDoc.player1.killed, ...isJump.killed]
+                                }
+
+                                Player.findByIdAndUpdate(gameDoc.player1, { 
+                                    ...update
+                                }, { new: true })
                                 .then((player1) => {
-                                    console.log('player1', player1);
                                     var updateBot = {
-                                        $push: {},
-                                        $pull: {}
+                                        $set: { 
+                                            normal_positions: Object.keys(updateGame.botPlayer).filter(position => updateGame.botPlayer[position] === 'normal'),
+                                            king_positions: Object.keys(updateGame.botPlayer).filter(position => updateGame.botPlayer[position] === 'king')
+                                        }
                                     }
 
                                     if ( isJump.jump ) {
-                                        updateBot.$push['lose'] = isJump.killed;
 
-                                        updateBot.$pull['normal_positions'] = isJump.killed;
-                                        updateBot.$pull['king_positions'] = isJump.killed;
+                                        isJump.killed.forEach((kill) => {
+                                            delete updateGame.botPlayer[kill];
+                                        })
+
+                                        updateBot.$set['lose'] = [...gameDoc.player2.lose, ...isJump.killed];
+
                                     }
 
                                     Player.findByIdAndUpdate(player1.oponent, { ...updateBot }, { new: true }).then((player2) => {
-                                        console.log('player2', player2);
                                         redisClient.set(gameId, JSON.stringify(updateGame)).then(() => {
                                             let response = {
                                                 from: from,

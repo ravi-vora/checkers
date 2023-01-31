@@ -49,7 +49,7 @@ export const loginUser = (io, socket, payload) => {
      */
     const errors = validateAuthUser(payload);
     if (typeof errors !== "boolean") {
-        socket.emit('user:register:fail', errors);
+        socket.emit('user:login:fail', errors);
     }
     else {
         User.findOne({ email: payload.email })

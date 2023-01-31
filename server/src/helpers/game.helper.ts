@@ -308,3 +308,25 @@ export const checkJump = (from: string, to: string, numberOfPaths: number) => {
     if (killed.length > 0) return { jump: true, killed: killed }
     else return { jump: false }
 }
+
+export const checkSaftyBeforeMove = (currentPosition, movePosition, game: any, role: string) => {
+    const frontLeft = findCross({ position: movePosition, forwardOrBack: true, leftOrRight: true, steps: 1 });
+    const backRight = findCross({ position: movePosition, forwardOrBack: false, leftOrRight: false, steps: 1 });
+
+    const frontRight = findCross({ position: movePosition, forwardOrBack: true, leftOrRight: false, steps: 1 });
+    const backLeft = findCross({ position: movePosition, forwardOrBack: false, leftOrRight: true, steps: 1 });
+    if ( frontLeft && game.real_player[frontLeft] ) {
+        if ( backRight && backRight === currentPosition) {
+            return false;
+        } else if(backRight && !game.bot_player[backRight] && !game.real_player[backRight]) {
+            return false;
+        }
+    } else if ( frontRight && game.real_player[frontRight]) {
+        if ( backLeft && backLeft === currentPosition) {
+            return false;
+        } else if( backLeft && !game.real_player[backLeft] && !game.bot_player[backLeft]) {
+            return false;
+        }
+    }
+    return true;
+}

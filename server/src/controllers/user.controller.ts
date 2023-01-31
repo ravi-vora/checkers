@@ -55,7 +55,7 @@ export const loginUser = (io: Server, socket: Socket, payload: any) : void => {
     const errors : AuthUserError | boolean = validateAuthUser(payload);
 
     if ( typeof errors !== "boolean" ) {
-        socket.emit('user:register:fail', errors);
+        socket.emit('user:login:fail', errors);
     } else {
         User.findOne({ email: payload.email })
         .then(( user ) => {

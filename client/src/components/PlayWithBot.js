@@ -9,6 +9,7 @@ const PlayWithBot = ({ socket }) => {
     const [playerTiles, setPlayerTiles] = React.useState(null);
     const [botTiles, setBotTiles] = React.useState(null);
     const [playerTargeted, setPlayerTargeted] = React.useState(null);
+    const [possibleMove, setPossibleMove] = React.useState([]);
 
     const showMessage = (message) => {
         setOpen(true);
@@ -19,7 +20,7 @@ const PlayWithBot = ({ socket }) => {
         e.stopPropagation();
 
         if(socket.connected) {
-            if(playerTiles[position] && !playerTargeted) {
+            if(playerTiles[position] && !playerTargeted && !possibleMove.includes(position)) {
                 setPlayerTargeted(position)
                 socket.emit('player:move-possible', { 
                     position: position,
@@ -46,6 +47,7 @@ const PlayWithBot = ({ socket }) => {
                 console.log(playerMoved)
                 setPlayerTiles(playerMoved?.realPlayer);
                 setPlayerTargeted(null)
+                setPossibleMove([])
                 document.querySelectorAll('.position').forEach(e => {
                     e.style.opacity = '1';
                     
@@ -58,6 +60,7 @@ const PlayWithBot = ({ socket }) => {
 
             socket.on('player:move-possible:success', (move) => {
                 console.log(move)
+                setPossibleMove(move);
                 document.querySelectorAll('.position').forEach(e => {
                     if (Array.isArray(move) && move.includes(e.id)) {
                         e.style.opacity = '0.1';
