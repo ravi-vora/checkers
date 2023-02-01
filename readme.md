@@ -41,5 +41,9 @@
 - player:move:success
 - player:move:fail
 
+## bot
+- bot:move:success
+- bot:move:fail
+
 
 # browser -> http://localhost:3000

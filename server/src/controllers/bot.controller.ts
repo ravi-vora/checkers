@@ -4,6 +4,15 @@ import { Game } from "../models/game.model.js";
 import { Player } from "../models/player.model.js";
 import { redisClient } from "../services/redis.service.js";
 
+
+/**
+ * 1. check kill
+ * 2. is safe to kill
+ * 3. get possible move
+ * 4. is safe to play possible move
+ * 5. if not, get another random move
+ * 6. play random move
+ */
 export const playBot1 = (gameId, game, io, socket) => {
     if (game && Object.keys(game.botPlayer).length < 1 || Object.keys(game.realPlayer).length < 1) {
         Game.findById(gameId).populate(['player1', 'player2']).then((game) => {
@@ -263,6 +272,10 @@ export const playBot1 = (gameId, game, io, socket) => {
     }
 }
 
+
+/**
+ * only random moves
+ */
 export const playBot2 = (gameId, game, io, socket) => {
     if (game && Object.keys(game.botPlayer).length < 1 || Object.keys(game.realPlayer).length < 1) {
         Game.findById(gameId).populate(['player1', 'player2']).then((game) => {
