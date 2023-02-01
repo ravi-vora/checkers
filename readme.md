@@ -11,7 +11,7 @@
 
 
 # events -> http://localhost:8080
-** users
+## users
 - user:register
 - user:register:success
 - user:register:fail
@@ -24,7 +24,7 @@
 - token:refresh:success
 - token:refresh:fail
 
-** game
+## game
 - game:create-bot
 - game:create-bot:success
 - game:create-bot:fail
@@ -32,7 +32,7 @@
 - game:over
 - game:over:fail          [only for developer to track the error]
 
-** player
+## player
 - player:move-possible
 - player:move-possible:success
 - player:move-possible:fail
