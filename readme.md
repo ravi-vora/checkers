@@ -8,3 +8,7 @@
 - cd ../client
 - npm install
 - npm start
+
+
+events -> http://localhost:8080
+browser -> http://localhost:3000
