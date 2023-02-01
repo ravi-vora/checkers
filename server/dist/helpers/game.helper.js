@@ -6,7 +6,6 @@ export const directionConfig = {
     leftBack: { forwardOrBack: true, leftOrRight: false }
 };
 export const validatePosition = (position) => {
-    console.log('validation on position : ', position);
     try {
         const firstLetter = position[0];
         const secondLetter = position[1];
@@ -144,6 +143,23 @@ export const findPossibleMoves = (position, game, maximum, realOrBot) => {
     else {
         throw new Error("invalid player position");
     }
+};
+const canKillPosition = (from, game, realOrNot) => {
+    var killed = [];
+    Object.keys(directionConfig).every((direction) => {
+        const jump = findCross({ ...directionConfig[direction], steps: 2, position: from });
+        const between = findCross({ ...directionConfig[direction], steps: 1, position: from });
+        if (realOrNot) {
+            if (game.botPlayer[between] && !game.realPlayer[jump] && !game.botPlayer[jump]) {
+                killed.push(between);
+            }
+        }
+        else {
+            if (game.realPlayer[between] && !game.realPlayer[jump] && !game.botPlayer[jump]) {
+                killed.push(between);
+            }
+        }
+    });
 };
 export const findKillMoves = (position, game, position_type, forwardOrBack, realOrBot = false) => {
     var available = [];
@@ -303,35 +319,42 @@ export const findAnyPossibleMoves = (position, game, position_type, forwardOrBac
     }
     return available;
 };
-/**
- * FIXME: [BIG]
- */
-export const checkJump = (from, to, numberOfPaths = 2) => {
+export const checkJump = (from, to, numberOfPaths = 2, game) => {
     var frontLeft = findCross({ position: from, forwardOrBack: false, leftOrRight: false, steps: 1 });
     var frontRight = findCross({ position: from, forwardOrBack: false, leftOrRight: true, steps: 1 });
     var backLeft = findCross({ position: from, forwardOrBack: true, leftOrRight: false, steps: 1 });
     var backRight = findCross({ position: from, forwardOrBack: true, leftOrRight: true, steps: 1 });
-    if (frontLeft === to ||
-        frontRight === to ||
-        backLeft === to ||
-        backRight === to) {
+    if (frontLeft && frontLeft === to ||
+        frontRight && frontRight === to ||
+        backLeft && backLeft === to ||
+        backRight && backRight === to) {
         return { jump: false };
     }
     var killed = [];
     var kill = null;
     Object.keys(directionConfig).every((direction, d_index) => {
-        if (d_index > numberOfPaths)
+        var makeJump_1 = findCross({ ...directionConfig[direction], steps: 2, position: from });
+        var between_position_1 = null;
+        if (makeJump_1 && makeJump_1 === to) {
+            between_position_1 = findCross({ ...directionConfig[direction], steps: 1, position: from });
+            if (between_position_1)
+                killed.push(between_position_1);
             return false;
-        let check = numberOfPaths;
-        while (check && from) {
-            --check;
-            const makeJump = findCross({ ...directionConfig[direction], step: 2, position: from });
-            if (makeJump === to) {
-                kill = findCross({ ...directionConfig[direction], step: 1, position: from });
-                if (kill)
-                    killed.push(kill);
-            }
-            from = makeJump;
+        }
+        if (makeJump_1 && makeJump_1 !== to) {
+            Object.keys(directionConfig).every((toDirectionConfig, d2_index) => {
+                const makeJump_2 = findCross({ ...directionConfig[toDirectionConfig], steps: 2, position: makeJump_1 });
+                if (makeJump_2 && makeJump_2 === to) {
+                    const between_position_2 = findCross({ ...directionConfig[toDirectionConfig], steps: 1, position: makeJump_1 });
+                    if (between_position_1)
+                        killed.push(between_position_1);
+                    if (!game.realPlayer[makeJump_1] && !game.botPlayer[makeJump_1] && between_position_2) {
+                        killed.push(between_position_2);
+                        return false;
+                    }
+                }
+                return true;
+            });
         }
         return true;
     });

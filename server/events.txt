@@ -16,6 +16,9 @@
 - game:create-bot:success
 - game:create-bot:fail
 
+- game:over
+- game:over:fail          [only for developer to track the error]
+
 # player
 - player:move-possible
 - player:move-possible:success

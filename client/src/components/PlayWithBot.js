@@ -20,7 +20,7 @@ const PlayWithBot = ({ socket }) => {
         e.stopPropagation();
 
         if(socket.connected) {
-            if(playerTiles[position] && !playerTargeted && !possibleMove.includes(position)) {
+            if(playerTiles[position] && !possibleMove.includes(position)) {
                 setPlayerTargeted(position)
                 socket.emit('player:move-possible', { 
                     position: position,
@@ -28,7 +28,8 @@ const PlayWithBot = ({ socket }) => {
                     gameId: localStorage.getItem('gameId')
                 })
             } else {
-                console.log('front', { from: playerTargeted, to: position })
+                setPlayerTargeted(null)
+                setPossibleMove([])
                 socket.emit('player:move', { 
                     from: playerTargeted, 
                     to: position,
@@ -42,7 +43,12 @@ const PlayWithBot = ({ socket }) => {
     }
 
     React.useEffect(() => {
-        socket.on('connect', () => {
+        function initGameWithBot() {
+            socket.on('game:over', (game) => {
+                console.log(game)
+                localStorage.removeItem('gameId');
+            })
+
             socket.on('bot:move:success', (botMoved) => {
                 console.log('botmoved', botMoved);
                 setBotTiles(botMoved?.botPlayer);
@@ -60,7 +66,8 @@ const PlayWithBot = ({ socket }) => {
             })
 
             socket.on('player:turn', (game) => {
-                console.log('turn', game);
+                console.log('turn');
+                setPossibleMove([])
             })
 
 
@@ -68,7 +75,6 @@ const PlayWithBot = ({ socket }) => {
                 console.log(playerMoved)
                 setPlayerTiles(playerMoved?.realPlayer);
                 setPlayerTargeted(null)
-                setPossibleMove([])
                 document.querySelectorAll('.position').forEach(e => {
                     e.style.opacity = '1';
                     
@@ -108,7 +114,14 @@ const PlayWithBot = ({ socket }) => {
             socket.emit('game:create-bot', {
                 token: localStorage.getItem('auth_token')
             });
+        }
+        
+        socket.on('connect', () => {
+            initGameWithBot()
         })
+        return () => {
+            if (socket.connected) initGameWithBot();
+        }
     }, [socket])
 
     return (
@@ -116,7 +129,8 @@ const PlayWithBot = ({ socket }) => {
             paddingTop: "10px",
         }}>
             <Grid sx={{
-                backgroundColor: "#E8D2A6"
+                backgroundColor: "#E8D2A6",
+                paddingBottom: '20px'
             }} maxWidth="950px" maxHeight="950px" container spacing={0}>
                 {gameBoard && Object.keys(gameBoard).map((position) => (
                     <Grid item key={position}>

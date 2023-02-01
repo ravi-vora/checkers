@@ -33,6 +33,7 @@ export const createGameWithBot = (io, socket, payload) => {
                     }
                 }
             ]).sort({ createdAt: -1 }).limit(1).then(player => {
+                console.log(player[0]?.['game']?.[0]?.expiresAt);
                 if (player?.length > 0 && player[0]?.['game']?.[0] && player[0]?.['game']?.[0]?._id && player[0]?.['game']?.[0]?.expiresAt > new Date()) {
                     /**
                      * get already running game
@@ -95,7 +96,7 @@ export const createGameWithBot = (io, socket, payload) => {
                                  * register new game with both player
                                  * it'll expired in 10 minutes
                                  */
-                                const ten_minutes = addMinutes(new Date, 10);
+                                const ten_minutes = addMinutes(new Date, 5);
                                 Game.create({
                                     player1: player.id,
                                     player2: botPlayer.id,

@@ -8,6 +8,10 @@ import { loginUser, refreshToken, registerUser } from './controllers/user.contro
 import { createGameWithBot } from './controllers/game.controller.js';
 import { connectToRedis } from './services/redis.service.js';
 import { getPlayerPosssibleMove, movePlayerTile } from './controllers/player.controller.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 connectToRedis().then(() => {
     connectToDatabase().then(() => {
         const app = express();
